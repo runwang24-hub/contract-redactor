@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="上传合同，自动识别敏感信息并生成不可复制的图片型脱敏 PDF。"
+    />
+    <title>Contract Redactor · 合同脱敏工具</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <a class="brand" href="/" aria-label="Contract Redactor 首页">
+          <span class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M12 2.5 20 6v5.2c0 5.1-3.4 9.1-8 10.3-4.6-1.2-8-5.2-8-10.3V6l8-3.5Z" />
+              <path d="m8.7 12.2 2.1 2.1 4.7-5" />
+            </svg>
+          </span>
+          <span>
+            <strong>Contract Redactor</strong>
+            <small>合同脱敏工具</small>
+          </span>
+        </a>
+        <div class="service-state" id="serviceState">
+          <span class="service-state__dot"></span>
+          <span>正在连接服务</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="page-heading" aria-labelledby="pageTitle">
+        <div>
+          <p class="eyebrow">文档脱敏 · 本地工作台</p>
+          <h1 id="pageTitle">生成一份可以放心流转的合同副本</h1>
+          <p class="page-heading__copy">
+            系统逐页识别姓名、主体、地址、联系方式、编号、签名与印章，完成后输出不可复制的图片型 PDF。
+          </p>
+        </div>
+        <div class="privacy-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7.5 10V7a4.5 4.5 0 0 1 9 0v3M6 10h12v10H6z" />
+          </svg>
+          <div>
+            <strong>密钥不会进入浏览器</strong>
+            <span>OCR 与模型调用均由本机服务端完成</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="workspace-grid">
+        <section class="panel upload-panel" aria-labelledby="uploadTitle">
+          <div class="panel__header">
+            <div>
+              <span class="step-label">01 / 上传合同</span>
+              <h2 id="uploadTitle">选择需要脱敏的文件</h2>
+            </div>
+            <span class="format-chip">PDF · DOC · DOCX</span>
+          </div>
+
+          <div
+            class="dropzone"
+            id="dropzone"
+            role="button"
+            tabindex="0"
+            aria-label="点击选择合同，或将文件拖到这里"
+          >
+            <input
+              id="fileInput"
+              type="file"
+              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              hidden
+            />
+            <span class="dropzone__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" />
+                <path d="M14 2v6h6M12 18v-6m0 0-2.5 2.5M12 12l2.5 2.5" />
+              </svg>
+            </span>
+            <h3>拖入合同，或点击选择文件</h3>
+            <p>单个文件不超过 60 MB，Word 文档将自动转换为 PDF</p>
+            <button class="button button--secondary" type="button" id="browseButton">
+              浏览本机文件
+            </button>
+          </div>
+
+          <div class="file-card" id="fileCard" hidden>
+            <span class="file-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" />
+                <path d="M14 2v6h6" />
+              </svg>
+            </span>
+            <div class="file-card__text">
+              <strong id="fileName"></strong>
+              <span id="fileMeta"></span>
+            </div>
+            <button class="icon-button" type="button" id="removeFile" aria-label="移除文件">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m6 6 12 12M18 6 6 18" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="action-row">
+            <div class="action-row__hint">
+              <span class="action-row__shield" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3 19 6v5c0 4.5-2.9 8-7 9.2C7.9 19 5 15.5 5 11V6l7-3Z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+              </span>
+              <span>原文件不会被修改，结果将另存为新 PDF</span>
+            </div>
+            <button class="button button--primary" type="button" id="startButton" disabled>
+              <span>开始脱敏</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12h14m-5-5 5 5-5 5" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="processing" id="processingPanel" hidden aria-live="polite">
+            <div class="processing__topline">
+              <div>
+                <span class="step-label">02 / 正在处理</span>
+                <h3 id="phaseText">正在准备合同</h3>
+              </div>
+              <strong id="progressValue">5%</strong>
+            </div>
+            <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+              <span id="progressBar"></span>
+            </div>
+            <div class="processing__meta">
+              <span id="pageProgress">正在读取文档页数</span>
+              <span>请保持本页面打开</span>
+            </div>
+            <ol class="process-steps" id="processSteps">
+              <li data-threshold="5"><span></span>文档准备</li>
+              <li data-threshold="10"><span></span>页面转换</li>
+              <li data-threshold="14"><span></span>OCR 与识别</li>
+              <li data-threshold="94"><span></span>安全输出</li>
+            </ol>
+          </div>
+
+          <div class="result" id="resultPanel" hidden aria-live="polite">
+            <div class="result__heading">
+              <span class="result__check" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m6.5 12.5 3.3 3.3L17.8 8" /></svg>
+              </span>
+              <div>
+                <span class="step-label">处理完成</span>
+                <h3>安全副本已经生成</h3>
+              </div>
+            </div>
+            <div class="stat-grid">
+              <div><strong id="statPages">—</strong><span>合同页数</span></div>
+              <div><strong id="statEntities">—</strong><span>文字遮盖</span></div>
+              <div><strong id="statVisuals">—</strong><span>签章区域</span></div>
+            </div>
+            <div class="result__actions">
+              <a class="button button--primary" id="downloadButton" href="#">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14" />
+                </svg>
+                下载脱敏 PDF
+              </a>
+              <button class="button button--ghost" type="button" id="newTaskButton">
+                处理另一份合同
+              </button>
+            </div>
+          </div>
+
+          <div class="error-box" id="errorBox" hidden role="alert">
+            <strong>这次没有处理完成</strong>
+            <p id="errorText"></p>
+            <button class="button button--ghost" type="button" id="retryButton">重新选择文件</button>
+          </div>
+        </section>
+
+        <aside class="side-stack" aria-label="处理说明">
+          <section class="panel scope-card">
+            <span class="step-label">默认处理范围</span>
+            <h2>命中后完整遮盖</h2>
+            <div class="scope-tags" aria-label="默认脱敏字段">
+              <span>自然人姓名</span>
+              <span>公司与机构全称</span>
+              <span>详细地址</span>
+              <span>电话与邮箱</span>
+              <span>证件与银行账号</span>
+              <span>合同及权属编号</span>
+              <span>IP、网址、车牌、案号</span>
+              <span>商业秘密</span>
+              <span>签名与红色印章</span>
+            </div>
+            <p class="scope-note">
+              普通日期、金额和合同条款默认保留；正式流转前仍建议人工抽查。
+            </p>
+          </section>
+
+        </aside>
+      </div>
+
+      <section class="preview-panel panel" id="previewPanel" aria-labelledby="previewTitle">
+        <div class="panel__header preview-panel__header">
+          <div>
+            <span class="step-label">03 / 结果预览</span>
+            <h2 id="previewTitle">在页面中检查脱敏结果</h2>
+          </div>
+          <a class="text-link" id="openPreview" href="#" target="_blank" rel="noopener" hidden>
+            在新窗口打开
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 5h5v5M19 5l-8 8M18 13v6H5V6h6" />
+            </svg>
+          </a>
+        </div>
+        <div class="preview-empty" id="previewEmpty">
+          <span class="preview-empty__document" aria-hidden="true">
+            <svg viewBox="0 0 64 76">
+              <path d="M13 3h26l13 14v56H13z" />
+              <path d="M39 3v15h13M22 34h21M22 44h16" />
+              <path class="redaction-line" d="M22 55h21" />
+            </svg>
+          </span>
+          <strong>脱敏完成后，PDF 会显示在这里</strong>
+          <p>你可以逐页检查黑框位置，再决定是否下载和流转。</p>
+        </div>
+        <iframe id="pdfPreview" title="脱敏 PDF 预览" hidden></iframe>
+      </section>
+    </main>
+
+    <footer>
+      <span>Contract Redactor</span>
+      <span>建议在正式流转前进行一次人工抽查</span>
+    </footer>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

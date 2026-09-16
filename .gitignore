@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+*.pyc
+
+# Local IDE/editor state
+.idea/
+.vscode/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+config/*.json
+!config/*.example.json
+
+# Generated data and model artifacts
+data/generated/
+models/
+
+# Runtime logs
+*.log
+uvicorn.*.log
+
+# Local documents and generated outputs
+input/
+output/
+runtime/
+tmp/
+*.pdf
+*.docx
+*.doc
+*.jpg
+*.jpeg
+*.png
+*.webp
+!docs/contract-redactor-demo.png
+
+# macOS
+.DS_Store
+
+tests
+!tests/
+!tests/**/*.py
